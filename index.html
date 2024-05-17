@@ -5,30 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>YouTube Video Downloader</title>
     <style>
-      body {
-        font-family: Arial, sans-serif;
+      .container {
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
-        background-color: #f4f4f4;
-      }
-      .container {
-        background: white;
-        width: 500px;
-        padding: 40px;
-        border-radius: 4px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        flex-direction: column;
       }
       input[type="text"] {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 10px;
+        width: 400px;
+        height: 40px;
+        padding: 0px 10px;
         border: 1px solid #ddd;
         border-radius: 5px;
       }
+      input[type="text"]:focus {
+        outline: none;
+      }
       button {
+        margin-top: 20px;
         padding: 10px 20px;
+        height: 40px;
         background-color: #28a745;
         border: none;
         border-radius: 5px;
@@ -63,20 +59,147 @@
           transform: rotate(360deg);
         }
       }
+
+      body {
+        height: 100vh;
+        background: url("https://wallpapercave.com/wp/6SLzBEY.jpg") no-repeat
+          left top;
+        background-size: cover;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .text h1 {
+        color: #011718;
+        margin-top: -200px;
+        font-size: 15em;
+        text-align: center;
+        text-shadow: -5px 5px 0px rgba(0, 0, 0, 0.7),
+          -10px 10px 0px rgba(0, 0, 0, 0.4), -15px 15px 0px rgba(0, 0, 0, 0.2);
+        font-family: monospace;
+        font-weight: bold;
+      }
+
+      .text h2 {
+        color: rgb(238, 114, 114);
+        font-size: 5em;
+        text-shadow: -5px 5px 0px rgba(129, 129, 129, 0.7);
+        text-align: center;
+        margin-top: -150px;
+        font-family: monospace;
+        font-weight: bold;
+      }
+      .text h3 {
+        color: white;
+        margin-left: 30px;
+        font-size: 2em;
+        text-shadow: -5px 5px 0px rgba(0, 0, 0, 0.7);
+        margin-top: -40px;
+        font-family: monospace;
+        font-weight: bold;
+      }
+      .torch {
+        margin: -350px 0 0 -350px;
+        width: 700px;
+        height: 700px;
+        box-shadow: 0 0 0 9999em #000000f7;
+        opacity: 1;
+        border-radius: 50%;
+        position: fixed;
+        background: rgba(0, 0, 0, 0.3);
+
+        &:after {
+          content: "";
+          display: block;
+          border-radius: 50%;
+          width: 100%;
+          height: 100%;
+          top: 0px;
+          left: 0px;
+          box-shadow: inset 0 0 40px 2px #000,
+            0 0 20px 4px rgba(13, 13, 10, 0.2);
+        }
+      }
+      .button-group {
+        display: flex;
+        justify-content: center;
+      }
+      #videoUrl {
+        position: relative;
+      }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h2>YouTube Video Downloader</h2>
-      <input type="text" id="videoUrl" placeholder="Enter YouTube video URL" />
-      <button id="downloadButton" onclick="downloadVideo()">Download</button>
-      <div class="loading" id="loading">
-        <div class="spinner"></div>
+    <div class="text">
+      <div>
+        <h2>YouTube Video Downloader</h2>
+        <div class="container">
+          <input
+            type="text"
+            id="videoUrl"
+            placeholder="Enter YouTube video URL"
+          />
+        </div>
+        <div class="button-group">
+          <button id="downloadButton" onclick="downloadVideo()">
+            Download
+          </button>
+        </div>
+        <div class="container">
+          <div class="loading" id="loading">
+            <div class="spinner"></div>
+          </div>
+          <div class="message" id="message"></div>
+          <div class="message" id="message2"></div>
+        </div>
       </div>
-      <div class="message" id="message"></div>
-      <div class="message" id="message2"></div>
+      <div class="torch" id="torch"></div>
     </div>
     <script>
+      const buttonRef = document.querySelector("#downloadButton");
+      const torch = document.querySelector("#torch");
+      const input = document.querySelector("#videoUrl");
+      let isHovering = false;
+      let isHoveringInput = false;
+
+      const handleMouseMove = (event) => {
+        const rect = buttonRef?.getBoundingClientRect();
+        const InputRect = input?.getBoundingClientRect();
+
+        if (torch) {
+          isHovering =
+            rect &&
+            rect.x <= event.x &&
+            event.x < rect.x + 100 &&
+            rect.y < event.y &&
+            event.y < rect.y + 40;
+          isHoveringInput =
+            InputRect &&
+            InputRect.x <= event.x &&
+            event.x < InputRect.x + 880 &&
+            InputRect.y < event.y &&
+            event.y < InputRect.y + 42;
+          setIsHovering(isHovering, isHoveringInput);
+          torch.style.top = event.y + "px";
+          torch.style.left = event.x + "px";
+        }
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+
+      const setIsHovering = (hovering, isHoveringInput) => {
+        if (hovering) {
+          buttonRef.style.zIndex = 2;
+        } else if (isHoveringInput) {
+          input.style.zIndex = 2;
+        } else {
+          buttonRef.style.zIndex = 0;
+          input.style.zIndex = 0;
+        }
+      };
+
       function downloadVideo() {
         const url = document.getElementById("videoUrl").value;
         const downloadButton = document.getElementById("downloadButton");
@@ -103,7 +226,8 @@
             if (data.title) {
               messageDiv.innerHTML = `Downloaded: ${data.title} (Views: ${data.views})`;
               messageDiv2.innerHTML = `Path: ${data.path}`;
-              messageDiv.style.color = "green";
+              messageDiv.style.color = "white";
+              messageDiv2.style.color = "white";
             } else {
               messageDiv.innerHTML = `Error: ${data.message}`;
               messageDiv.style.color = "red";

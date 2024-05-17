@@ -16,6 +16,10 @@ DOWNLOAD_DIR = DESKTOP_DIR
 def index():
     return send_from_directory(os.getcwd(), 'index.html')
 
+@app.route("/static/<path:path>")
+def assets(path):
+    return send_from_directory("static", path)
+
 @app.route("/download", methods=["POST"])
 def download_video():
     video_url = request.json.get('video_url')
@@ -38,4 +42,4 @@ def download_video():
     return jsonify({"title": yt.title, "views": yt.views, 'path': file_path}), 201
 
 if __name__ == "__main__":
-    app.run(debug=False, host='0.0.0.0', port=os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=os.environ.get('PORT', 5000))
