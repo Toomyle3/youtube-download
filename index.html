@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube Video Downloader</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f4f4f4;
+      }
+      .container {
+        background: white;
+        width: 500px;
+        padding: 40px;
+        border-radius: 4px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #28a745;
+        border: none;
+        border-radius: 5px;
+        color: white;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #218838;
+      }
+      .message {
+        margin-top: 10px;
+      }
+      .loading {
+        display: none;
+        margin-top: 10px;
+        color: #28a745;
+      }
+      .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-top: 4px solid #28a745;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+        margin-right: 10px;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>YouTube Video Downloader</h2>
+      <input type="text" id="videoUrl" placeholder="Enter YouTube video URL" />
+      <button id="downloadButton" onclick="downloadVideo()">Download</button>
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+      </div>
+      <div class="message" id="message"></div>
+      <div class="message" id="message2"></div>
+    </div>
+    <script>
+      function downloadVideo() {
+        const url = document.getElementById("videoUrl").value;
+        const downloadButton = document.getElementById("downloadButton");
+        const loading = document.getElementById("loading");
+        const videoUrlInput = document.getElementById("videoUrl");
+        downloadButton.disabled = true;
+        downloadButton.style.backgroundColor = "gray";
+        downloadButton.style.pointerEvents = "none";
+        videoUrlInput.disabled = true;
+        loading.style.display = "block";
+
+        fetch("/download", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ video_url: url }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const messageDiv = document.getElementById("message");
+            const messageDiv2 = document.getElementById("message2");
+
+            if (data.title) {
+              messageDiv.innerHTML = `Downloaded: ${data.title} (Views: ${data.views})`;
+              messageDiv2.innerHTML = `Path: ${data.path}`;
+              messageDiv.style.color = "green";
+            } else {
+              messageDiv.innerHTML = `Error: ${data.message}`;
+              messageDiv.style.color = "red";
+            }
+            downloadButton.disabled = false;
+            videoUrlInput.disabled = false;
+            loading.style.display = "none";
+            downloadButton.style.backgroundColor = "green";
+            downloadButton.style.pointerEvents = "auto";
+          })
+          .catch((error) => {
+            const messageDiv = document.getElementById("message");
+            messageDiv.innerHTML = `Error: ${error}`;
+            messageDiv.style.color = "red";
+            downloadButton.disabled = false;
+            videoUrlInput.disabled = false;
+            loading.style.display = "none";
+          });
+      }
+    </script>
+  </body>
+</html>
