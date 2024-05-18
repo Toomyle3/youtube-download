@@ -141,6 +141,12 @@
             id="videoUrl"
             placeholder="Enter YouTube video URL"
           />
+          <input
+            style="margin-top: 10px"
+            type="text"
+            id="saveDirectory"
+            placeholder="Enter directory path"
+          />
         </div>
         <div class="button-group">
           <button id="downloadButton" onclick="downloadVideo()">
@@ -160,48 +166,61 @@
     <script>
       const buttonRef = document.querySelector("#downloadButton");
       const torch = document.querySelector("#torch");
+      const path = document.querySelector("#saveDirectory");
       const input = document.querySelector("#videoUrl");
       let isHovering = false;
       let isHoveringInput = false;
 
       const handleMouseMove = (event) => {
-        const rect = buttonRef?.getBoundingClientRect();
-        const InputRect = input?.getBoundingClientRect();
+        const buttonRect = buttonRef.getBoundingClientRect();
+        const inputRect = input.getBoundingClientRect();
+        const pathRect = path.getBoundingClientRect();
+        const mouseX = event.clientX;
+        const mouseY = event.clientY;
 
         if (torch) {
           isHovering =
-            rect &&
-            rect.x <= event.x &&
-            event.x < rect.x + 100 &&
-            rect.y < event.y &&
-            event.y < rect.y + 40;
+            mouseX >= buttonRect.left &&
+            mouseX <= buttonRect.right &&
+            mouseY >= buttonRect.top &&
+            mouseY <= buttonRect.bottom;
           isHoveringInput =
-            InputRect &&
-            InputRect.x <= event.x &&
-            event.x < InputRect.x + 880 &&
-            InputRect.y < event.y &&
-            event.y < InputRect.y + 42;
-          setIsHovering(isHovering, isHoveringInput);
+            mouseX >= inputRect.left &&
+            mouseX <= inputRect.right &&
+            mouseY >= inputRect.top &&
+            mouseY <= inputRect.bottom;
+          isHoveringPath =
+            mouseX >= pathRect.left &&
+            mouseX <= pathRect.right &&
+            mouseY >= pathRect.top &&
+            mouseY <= pathRect.bottom;
+          setIsHovering(isHovering, isHoveringInput, isHoveringPath);
           torch.style.top = event.y + "px";
           torch.style.left = event.x + "px";
         }
       };
 
-      document.addEventListener("mousemove", handleMouseMove);
+      if (!/Mobi|Android/i.test(navigator.userAgent)) {
+        document.addEventListener("mousemove", handleMouseMove);
+      }
 
-      const setIsHovering = (hovering, isHoveringInput) => {
+      const setIsHovering = (hovering, isHoveringInput, isHoveringPath) => {
         if (hovering) {
           buttonRef.style.zIndex = 2;
         } else if (isHoveringInput) {
           input.style.zIndex = 2;
+        } else if (isHoveringPath) {
+          path.style.zIndex = 2;
         } else {
           buttonRef.style.zIndex = 0;
           input.style.zIndex = 0;
+          path.style.zIndex = 0;
         }
       };
 
       function downloadVideo() {
         const url = document.getElementById("videoUrl").value;
+        const saveDirectory = document.getElementById("saveDirectory").value;
         const downloadButton = document.getElementById("downloadButton");
         const loading = document.getElementById("loading");
         const videoUrlInput = document.getElementById("videoUrl");
@@ -216,7 +235,10 @@
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ video_url: url }),
+          body: JSON.stringify({
+            video_url: url,
+            download_directory: saveDirectory,
+          }),
         })
           .then((response) => response.json())
           .then((data) => {

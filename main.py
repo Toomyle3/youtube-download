@@ -4,25 +4,20 @@ import os
 import logging
 
 app = Flask(__name__)
-
 logging.basicConfig(level=logging.DEBUG)
-
-HOME_DIR = os.path.expanduser("~")
-DESKTOP_DIR = os.path.join(HOME_DIR, 'Desktop')
-
-DOWNLOAD_DIR = DESKTOP_DIR
 
 @app.route("/")
 def index():
     return send_from_directory(os.getcwd(), 'index.html')
 
-@app.route("/static/<path:path>")
-def assets(path):
-    return send_from_directory("static", path)
+def normalize_path(path):
+    normalized_path = path.replace("/", "\\")
+    return normalized_path
 
 @app.route("/download", methods=["POST"])
 def download_video():
     video_url = request.json.get('video_url')
+    download_directory = request.json.get('download_directory')
 
     if not video_url:
         logging.error("URL not found in request.")
@@ -30,16 +25,18 @@ def download_video():
 
     try:
         yt = YouTube(video_url)
+        if yt is None or yt.title == "Video Not Available":
+            raise ValueError("The video is not available.")
         yd = yt.streams.get_highest_resolution()
-        file_path = os.path.join(DOWNLOAD_DIR, yd.default_filename)
-        logging.info(f"Starting download: {file_path}")
-        yd.download(DOWNLOAD_DIR)
+        path = os.path.join(download_directory, yd.default_filename)
+        file_path = normalize_path(path)
+        yd.download(download_directory)
         logging.info(f"Downloaded successfully: {file_path}")
+        return jsonify({"title": yt.title, "views": yt.views, 'path': file_path}), 201
     except Exception as e:
         logging.error(f"Error during download: {str(e)}")
-        return jsonify({"message": str(e)}), 400
+        return jsonify({"message": "An error occurred while downloading the video."}), 400
 
-    return jsonify({"title": yt.title, "views": yt.views, 'path': file_path}), 201
-
+# Run the Flask app
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=os.environ.get('PORT', 5000))
